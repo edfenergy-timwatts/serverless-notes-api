@@ -7,7 +7,7 @@ package:
 plugins:
   - serverless-bundle          # Use Webpack 4 to optimise packages for Lambda (by dropping redundant dependencies)
   - serverless-offline         # Helpful for local development
-  - serverless-dotenv-plugin   # Load .env files as Lambda environment variables
+  - serverless-dotenv-plugin   # Load .env files as Lambda environment variables (for local secrets)
 
 custom:
   stage: ${opt:stage, self:provider.stage}   # Use --stage parameter or, if not provided, use default below
