@@ -30,8 +30,9 @@ build/Release
 node_modules
 jspm_packages
 
-# Other directories
+# Other directories and files
 removed
+command.txt
 
 # Optional npm cache directory
 .npm

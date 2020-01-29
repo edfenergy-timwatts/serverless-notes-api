@@ -1,4 +1,4 @@
-service: notes-app-api 
+service: notes-app-backend 
 
 # Create a single package per Lambda function (default behaviour is one package for all)
 package:
@@ -9,15 +9,20 @@ plugins:
   - serverless-offline         # Helpful for local development
   - serverless-dotenv-plugin   # Load .env files as Lambda environment variables
 
+custom:
+  stage: ${opt:stage, self:provider.stage}   # Use --stage parameter or, if not provided, use default below
+  tableName: ${self:custom.stage}-notes      # Prefix table name with stage; definition here supports local testing
+
 provider:
   name: aws
   runtime: nodejs10.x
-  stage: prod
+  profile: dev-user            # Governs .aws/credentials usage; alternatively set AWS_PROFILE before running sls
+  stage: dev
   region: eu-west-2
 
 # Define process.env variables for reference by multiple Lambda functions
   environment:
-    tableName: notes
+    tableName: ${self:custom.tableName}
 
 # Define permissions set for Lambda functions to access DynamoDB
   iamRoleStatements:
@@ -31,7 +36,7 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource:
-        - arn:aws:dynamodb:eu-west-2:*:table/notes
+        - "Fn::GetAtt": [ NotesTable, Arn ]   # Restrict by ARN using ref defined in ./resources/dynamodb-table.yml
 
 functions:
   create:
@@ -75,23 +80,9 @@ functions:
           cors: true
           authorizer: aws_iam
 
-# Create our resources with separate CloudFormation templates
+# Create additional backend resources using specific CloudFormation templates
 resources:
   - ${file(resources/api-gateway-errors.yml)}
-
-# Resources:
-#   NotesTable:
-#     Type: AWS::DynamoDB::Table
-#     Properties:
-#       TableName: notes
-#       AttributeDefinitions:
-#         - AttributeName: "userId"
-#           AttributeType: "S"
-#         - AttributeName: "noteId"
-#           AttributeType: "S"
-#       KeySchema:
-#         - AttributeName: "userId"
-#           KeyType: "HASH"
-#         - AttributeName: "noteId"
-#           KeyType: "RANGE"
-#       BillingMode: PAY_PER_REQUEST
+  - ${file(resources/dynamodb-table.yml)}
+  - ${file(resources/cognito-user-pool.yml)}
+  - ${file(resources/cognito-identity-pool.yml)}
